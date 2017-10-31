@@ -11,14 +11,14 @@ var Vehicle = Backbone.Model.extend({
     }
 });
 
-// var Car = Vehicle.extend({
-//     initialize: function() {
-//         console.log('Car initialized');
-//     },
-// 	start: function(){
-// 		console.log("Car with registration number " + this.get("registrationNumber") + " started.");
-// 	}
-// });
+var Car = Vehicle.extend({
+    // initialize: function() {
+    //     console.log('Car initialized');
+    // },
+	start: function(){
+		console.log("Car with registration number " + this.get("registrationNumber") + " started.");
+	}
+});
 
 // // var Car = new Car({registrationNumber: ' XLI887', color: 'red'});
 
@@ -49,6 +49,11 @@ var Vehicles = Backbone.Collection.extend({
 var vehicle = new Vehicle();
 
 var VehicleView = Backbone.View.extend({
+    
+    initialize: function(options) {
+        this.bus = options.bus;
+    },
+    
     events:{
         "click .delete": "onDelete"
     },
@@ -71,18 +76,62 @@ var VehicleView = Backbone.View.extend({
     }
 });
 
+var bus = _.extend({}, Backbone.Events);
+
 var VehiclesView = Backbone.View.extend({
+    id: "vehicles",
     tagName: "ul",
+
+    initialize: function() {
+        bus.on("carAdded", this.onCarAdded, this);
+    },
+
+    onCarAdded: function(registrationNumber) {
+        var car = new Car({ registrationNumber: registrationNumber });
+        var vehicleView = new VehicleView({ model: car });
+        this.$el.prepend(vehicleView.render().$el);
+    },
 
     render: function()  {
         var self = this;
         this.collection.each(function(vehicle){
-            var vehicleView = new VehicleView({model: vehicle});
+            var vehicleView = new VehicleView({model: vehicle, bus: self.bus});
             self.$el.append(vehicleView.render().$el);
         }, this);
         return this;
     }
 });
+
+// var vehiclesView = new VehiclesView({ collection: vehicles, bus: bus });
+// $("#container").html(vehiclesView.render().$el);
+
+var NewVehicleView = Backbone.View.extend({
+ 
+    events:{
+        "click .add": "addNewCar"
+    },
+    
+    render: function()  {
+        var source = $("#newVehicleTemplate").html();
+        var template = _.template(source);
+        
+        this.$el.html(template());
+        
+        return this;
+    },
+
+    addNewCar: function(){
+        var input = this.$el.find(".registration-number");
+        var registrationNumber = input.val();
+        bus.trigger("carAdded", registrationNumber);
+
+        input.val("");
+    }
+});
+
+// var newVehiclesView = new NewVehicleView({ model: vehicle, bus: bus });
+
+
 
 var vehicles = new Vehicles ([
     new Vehicle ({ registrationNumber: 'XLI887', color: "Blue" }),
@@ -90,5 +139,13 @@ var vehicles = new Vehicles ([
     new Vehicle ({ registrationNumber: 'XUV456', color: "Gray"  })
 ]);
 
-var vehiclesView = new VehiclesView({ collection: vehicles });
-$("#container").html(vehiclesView.render().$el);
+$("#container")
+            .append(new NewVehicleView().render().$el)
+            .append(new VehiclesView({ collection: vehicles }).render().$el);
+
+
+
+
+
+
+
