@@ -26,11 +26,11 @@ var Vehicles = Backbone.Collection.extend({
     model: Vehicle
 });
 
-// var cars = new Vehicles ([
-//     new Car ({ registrationNumber: 'XLI887', colour: 'Blue' }),
-//     new Car ({ registrationNumber: 'ZNP123', colour: 'Blue' }),
-//     new Car ({ registrationNumber: 'XUV456', colour: 'Gray' })
-// ]);
+var cars = new Vehicles ([
+    new Car ({ registrationNumber: 'XLI887', colour: 'Blue' }),
+    new Car ({ registrationNumber: 'ZNP123', colour: 'Blue' }),
+    new Car ({ registrationNumber: 'XUV456', colour: 'Gray' })
+]);
 
 
 
@@ -93,20 +93,16 @@ var VehiclesView = Backbone.View.extend({
     },
 
     render: function()  {
-        var self = this;
         this.collection.each(function(vehicle){
-            var vehicleView = new VehicleView({model: vehicle, bus: self.bus});
-            self.$el.append(vehicleView.render().$el);
+            var vehicleView = new VehicleView({model: vehicle });
+            this.$el.append(vehicleView.render().$el);
         }, this);
+
         return this;
     }
 });
 
-// var vehiclesView = new VehiclesView({ collection: vehicles, bus: bus });
-// $("#container").html(vehiclesView.render().$el);
-
 var NewVehicleView = Backbone.View.extend({
- 
     events:{
         "click .add": "addNewCar"
     },
@@ -125,25 +121,127 @@ var NewVehicleView = Backbone.View.extend({
         var registrationNumber = input.val();
         bus.trigger("carAdded", registrationNumber);
 
+        // It's the responsibility of this view to clear its text box
         input.val("");
     }
 });
 
-// var newVehiclesView = new NewVehicleView({ model: vehicle, bus: bus });
-
-
-
-var vehicles = new Vehicles ([
+var cars = new Vehicles ([
     new Vehicle ({ registrationNumber: 'XLI887', color: "Blue" }),
     new Vehicle ({ registrationNumber: 'ZNP123', color: "Blue"  }),
     new Vehicle ({ registrationNumber: 'XUV456', color: "Gray"  })
 ]);
 
-$("#container")
-            .append(new NewVehicleView().render().$el)
-            .append(new VehiclesView({ collection: vehicles }).render().$el);
+var boats = new Vehicles ([
+    new Vehicle ({ registrationNumber: 'boat1', color: "Green" }),
+    new Vehicle ({ registrationNumber: 'boat2', color: "White"  }),
+    new Vehicle ({ registrationNumber: 'boat3', color: "Yellow"  })
+]);
+
+// $("#container")
+//             .append(new NewVehicleView().render().$el)
+//             .append(new VehiclesView({ collection: vehicles }).render().$el);
 
 
+var CarsView = Backbone.View.extend({
+    // render: function(cars){
+    //     this.$el.html(cars);
+
+    //     return this;
+    // },
+
+    render: function()  {
+        this.collection.each(function(vehicle){
+            var vehicleView = new VehicleView({model: vehicle });
+            this.$el.append(vehicleView.render().$el);
+        }, this);
+
+        return this;
+    }
+});
+
+
+var BoatsView = Backbone.View.extend({
+    // render: function(boats){
+    //     this.$el.html(boats);
+
+    //     return this;
+    // }
+
+    render: function()  {
+        this.collection.each(function(boat){
+            var vehicleView = new VehicleView({model: boat });
+            this.$el.append(vehicleView.render().$el);
+        }, this);
+
+        return this;
+    }
+});
+
+var HomeView = Backbone.View.extend({
+    render: function(){
+        this.$el.html("Home Page");
+
+        return this;
+    }
+});
+
+var AppRouter = Backbone.Router.extend({
+    routes: {
+        "": "homeView",
+        "cars": "viewCars",
+        "boats": "viewBoats",
+        "*other": "defaultRoute"
+
+    },
+    homeView: function() {
+        this.loadView(new HomeView());
+    },
+
+    viewCars: function() {
+        this.loadView(new CarsView({ collection: cars }));
+    },
+
+    viewBoats: function() {
+        this.loadView(new BoatsView({ collection: boats }));
+    },
+
+    // We use this method to prevent memory leaks. When you replace
+	// the content of a DOM element with a new view, the old view is 
+	// still in the memory. So, we need to remove it explicitly. 
+	//
+	// Here we use a private field (_currentView) to keep track of the
+	// current view. 
+	loadView: function(view){
+		// If the currentView is set, remove it explicitly.
+		if (this._currentView) {
+			this._currentView.remove();
+		}
+
+		$("#container").html(view.render().$el);
+		
+		this._currentView = view;
+    },
+    
+	defaultRoute: function(){
+    }
+});
+
+var router = new AppRouter();
+Backbone.history.start();
+
+var NavView = Backbone.View.extend({
+    events: {
+        "click": "onClick"
+    },
+
+    onClick: function(e){
+        var $li = $(e.target);
+        router.navigate($li.attr("data-url"), {trigger:true});
+    }
+});
+
+var navView = new NavView({el: "#nav"});
 
 
 
